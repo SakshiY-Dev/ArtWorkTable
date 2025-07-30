@@ -19,7 +19,7 @@ This is a React-based project that fetches and displays artworks from the Art In
 
 ## 🚀 Getting Started
 
--npm install
--npm run dev
+- npm install
+- npm run dev
 
 
