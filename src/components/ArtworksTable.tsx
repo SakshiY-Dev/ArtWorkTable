@@ -27,15 +27,15 @@ const ArtworksTable = () => {
   const op = useRef<OverlayPanel>(null);
 
   const fetchData = async (pageNumber: number) => {
+    setLoading(true);
     try {
-      setLoading(true);
       const res = await axios.get(
         `https://api.artic.edu/api/v1/artworks?page=${pageNumber + 1}`
       );
       setValue(res.data.data);
       setTotalRecords(res.data.pagination.total);
     } catch (error) {
-      console.log("Error fetching data:", error);
+      console.error("Error fetching data:", error);
     } finally {
       setLoading(false);
     }
@@ -59,10 +59,18 @@ const ArtworksTable = () => {
   const handleRowSelection = () => {
     const count = parseInt(selectCount);
     if (!isNaN(count) && count >= 0) {
-      const firstBatch = value.slice(0, count);
-      setSelectedRows(firstBatch);
+      const newSelection = value
+        .filter((artwork) => !selectedRows.some((row) => row.id === artwork.id))
+        .slice(0, count);
+      setSelectedRows(newSelection);
       op.current?.hide();
     }
+  };
+
+  const handleOverlayToggle = (
+    event: React.MouseEvent<SVGElement, MouseEvent>
+  ) => {
+    op.current?.toggle(event);
   };
 
   return (
@@ -83,9 +91,7 @@ const ArtworksTable = () => {
             value={selectCount}
             onChange={(e) => {
               const val = e.target.value;
-              if (/^\d*$/.test(val)) {
-                setSelectCount(val);
-              }
+              if (/^\d*$/.test(val)) setSelectCount(val);
             }}
             style={{ padding: "6px" }}
           />
@@ -100,12 +106,15 @@ const ArtworksTable = () => {
         first={page * 12}
         rows={12}
         totalRecords={totalRecords}
-        onPage={(e) => setPage(e.page)}
+        onPage={(e) => setPage(e.page ?? 0)}
         lazy
         selection={selectedRows}
-        onSelectionChange={(e) => setSelectedRows(e.value)}
+        onSelectionChange={(e: { value: Artwork[] }) =>
+          setSelectedRows(e.value)
+        }
         dataKey="id"
         emptyMessage="No artworks found"
+        selectionMode="multiple"
       >
         <Column selectionMode="multiple" headerStyle={{ width: "3rem" }} />
         <Column
@@ -114,38 +123,38 @@ const ArtworksTable = () => {
             <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               <ChevronDown
                 size={20}
-                onClick={(e) => op.current?.toggle(e)}
-                className="mb-3"
+                onClick={handleOverlayToggle}
+                className="mb-3 cursor-pointer"
               />
               Title
             </span>
           }
-          body={(row) => row.title || "null"}
+          body={(rowData) => rowData.title || "null"}
         />
         <Column
           field="place_of_origin"
           header="Origin"
-          body={(row) => row.place_of_origin || "null"}
+          body={(rowData) => rowData.place_of_origin || "null"}
         />
         <Column
           field="artist_display"
           header="Artist"
-          body={(row) => row.artist_display || "null"}
+          body={(rowData) => rowData.artist_display || "null"}
         />
         <Column
           field="inscriptions"
           header="Inscriptions"
-          body={(row) => row.inscriptions || "null"}
+          body={(rowData) => rowData.inscriptions || "null"}
         />
         <Column
           field="date_start"
           header="Start Date"
-          body={(row) => row.date_start || "null"}
+          body={(rowData) => rowData.date_start || "null"}
         />
         <Column
           field="date_end"
           header="End Date"
-          body={(row) => row.date_end || "null"}
+          body={(rowData) => rowData.date_end || "null"}
         />
       </DataTable>
     </div>
